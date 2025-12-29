@@ -15,7 +15,7 @@ body{
 .page{display:none;padding:20px}
 .page.active{display:block}
 
-input,button{
+input,select,textarea,button{
     padding:12px;
     width:90%;
     max-width:320px;
@@ -67,6 +67,12 @@ button{
     <input id="userName" placeholder="Birthday Person Name">
     <input id="dob" placeholder="DOB (DD-MM-YYYY)">
     <input id="sender" placeholder="Gift Sender Name">
+    <select id="gender">
+        <option value="">Select Gender</option>
+        <option value="Boy">Boy</option>
+        <option value="Girl">Girl</option>
+    </select>
+    <textarea id="wishingMessage" placeholder="Enter custom wishing message" rows="3"></textarea>
     <h3 id="ageShow"></h3>
     <button onclick="startCake()">Reveal Cake 🎂</button>
 </div>
@@ -76,10 +82,12 @@ button{
     <div id="scene"></div>
     <!-- Overlay card for user info -->
     <div id="infoCard">
-        <h2 id="infoName">Birthday Person: </h2>
+        <h2 id="infoTitle"></h2>
+        <h2 id="infoName">Name: </h2>
         <p id="infoAge">Age: </p>
         <p id="infoDOB">DOB: </p>
-        <p id="infoSender">Gifted From: </p>
+        <p id="infoSender">From: </p>
+        <p id="infoMessage">Message: </p>
     </div>
 </div>
 
@@ -93,6 +101,8 @@ const dob=document.getElementById("dob");
 const ageShow=document.getElementById("ageShow");
 const userName=document.getElementById("userName");
 const sender=document.getElementById("sender");
+const gender=document.getElementById("gender");
+const wishingMessage=document.getElementById("wishingMessage");
 
 dob.addEventListener("input",()=>{
     let v=dob.value;
@@ -111,17 +121,19 @@ function showPage(n){
 }
 
 function startCake(){
-    if(!userName.value||!sender.value||age<=0){
-        alert("Enter valid details");
+    if(!userName.value||!sender.value||age<=0||!gender.value){
+        alert("Enter valid details including Gender");
         return;
     }
     showPage(2);
 
     // Update overlay info card
-    document.getElementById("infoName").innerText = "Birthday Person: " + userName.value;
+    document.getElementById("infoTitle").innerText = gender.value === "Girl" ? "Birthday Girl 🎀" : "Birthday Boy 🎉";
+    document.getElementById("infoName").innerText = "Name: " + userName.value;
     document.getElementById("infoAge").innerText = "Age: " + age;
     document.getElementById("infoDOB").innerText = "DOB: " + dob.value;
-    document.getElementById("infoSender").innerText = "Gifted From: " + sender.value;
+    document.getElementById("infoSender").innerText = "From: " + sender.value;
+    document.getElementById("infoMessage").innerText = "Message: " + wishingMessage.value;
 
     init3D();
 }
@@ -245,5 +257,3 @@ function animate(){
 </script>
 </body>
 </html>
-
-
