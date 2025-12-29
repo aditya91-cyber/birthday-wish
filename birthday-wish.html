@@ -109,7 +109,7 @@ function init3D(){
     scene.add(cakeGroup);
 
     let texLoader=new THREE.TextureLoader();
-    texLoader.load("cake.jpg",
+    texLoader.load("./cake.jpg",
         tex=>{
             addCake(new THREE.MeshStandardMaterial({map:tex, roughness:0.6}));
         },
@@ -206,3 +206,4 @@ function animate(){
 </script>
 </body>
 </html>
+
