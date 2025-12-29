@@ -11,8 +11,9 @@ body{
     color:white;
     text-align:center;
     font-family:Arial, sans-serif;
+    overflow-x:hidden;
 }
-.page{display:none;padding:20px}
+.page{display:none;padding:20px;position:relative;z-index:2;}
 .page.active{display:block}
 
 input,select,textarea,button{
@@ -36,6 +37,8 @@ button{
     height:60vh;
     touch-action:none;
     cursor:pointer;
+    position:relative;
+    z-index:1;
 }
 
 #infoCard{
@@ -63,7 +66,16 @@ button{
     word-break: break-word;
 }
 
-/* Responsive adjustments */
+canvas#fireworksCanvas{
+    position:absolute;
+    top:0;
+    left:0;
+    width:100%;
+    height:100%;
+    pointer-events:none;
+    z-index:0;
+}
+
 @media (max-width:600px){
     #scene{
         height:50vh;
@@ -83,7 +95,12 @@ button{
 </head>
 <body>
 
-<div class="page active" id="page1">
+<!-- Background Music -->
+<audio id="bgMusic" loop>
+  <source src="birthday_song.mp3" type="audio/mpeg">
+</audio>
+
+<div class="page" id="page1">
     <h1>🎉 Birthday Cake 🎉</h1>
     <input id="userName" placeholder="Birthday Person Name">
     <input id="dob" placeholder="DOB (DD-MM-YYYY)">
@@ -100,6 +117,7 @@ button{
 
 <div class="page" id="page2">
     <h2>🎂 Happy Birthday 🎂</h2>
+    <canvas id="fireworksCanvas"></canvas>
     <div id="scene"></div>
     <div id="infoCard">
         <h2 id="infoTitle"></h2>
@@ -114,6 +132,7 @@ button{
 <div class="page" id="page3">
     <h2>Your Birthday Message 🎁</h2>
     <p id="page3Message"></p>
+    <button onclick="shareLink()">Share This Wish</button>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
@@ -150,17 +169,16 @@ function showPage(n){
 
 // Start cake page
 function startCake(){
-    if(!userName.value||!sender.value||age<=0){
+    if(!userName.value||!sender.value||age<0){
         alert("Enter valid details including Gender");
         return;
     }
 
-    // Gender optional
     let selectedGender = gender.value || "Boy";
 
     showPage(2);
 
-    // Overlay info (without message)
+    // Overlay info
     document.getElementById("infoTitle").innerText = 
         selectedGender === "Girl" ? "Birthday Girl 🎀" : "Birthday Boy 🎉";
     document.getElementById("infoName").innerText = "Name: " + userName.value;
@@ -169,12 +187,29 @@ function startCake(){
     document.getElementById("infoSender").innerText = "From: " + sender.value;
 
     init3D();
+    startFireworks();
+    playMusic();
 }
 
 // Show message page
 function showMessagePage(){
     showPage(3);
-    document.getElementById("page3Message").innerText = wishingMessage.value;
+    document.getElementById("page3Message").innerText = wishingMessage.value || "Happy Birthday! 🎉";
+}
+
+// Share link
+function shareLink(){
+    let url = `${window.location.origin}${window.location.pathname}?name=${encodeURIComponent(userName.value)}&sender=${encodeURIComponent(sender.value)}&dob=${encodeURIComponent(dob.value)}&gender=${encodeURIComponent(gender.value)}&message=${encodeURIComponent(wishingMessage.value)}`;
+    navigator.clipboard.writeText(url);
+    alert("Link copied! Share it with your friend.");
+}
+
+// Background music
+function playMusic() {
+    const music = document.getElementById("bgMusic");
+    music.play().catch(e => {
+        document.addEventListener("click", () => music.play(), {once:true});
+    });
 }
 
 // 3D Cake
@@ -270,11 +305,12 @@ function init3D(){
     renderer.domElement.addEventListener("click", handlePointer, false);
     renderer.domElement.addEventListener("touchstart", handlePointer, false);
 
-    // Make responsive
     window.addEventListener('resize', () => {
         camera.aspect = document.getElementById("scene").clientWidth / document.getElementById("scene").clientHeight;
         camera.updateProjectionMatrix();
         renderer.setSize(document.getElementById("scene").clientWidth, document.getElementById("scene").clientHeight);
+        fireworksCanvas.width = window.innerWidth;
+        fireworksCanvas.height = window.innerHeight;
     });
 
     animate();
@@ -296,6 +332,104 @@ function animate(){
 
     renderer.render(scene,camera);
 }
+
+// ----- Automatic URL params handling -----
+function getQueryParams() {
+    let params = {};
+    window.location.search.substring(1).split("&").forEach(p=>{
+        let [key,value] = p.split("=");
+        if(key) params[key] = decodeURIComponent((value||"").replace(/\+/g," "));
+    });
+    return params;
+}
+
+window.onload = () => {
+    let params = getQueryParams();
+    if(params.name && params.sender){
+        userName.value = params.name;
+        sender.value = params.sender;
+        dob.value = params.dob || "";
+        gender.value = params.gender || "Boy";
+        wishingMessage.value = params.message || "Happy Birthday! 🎉";
+
+        // Calculate age
+        if(dob.value){
+            let parts = dob.value.includes("-")? dob.value.split("-") : dob.value.split("/");
+            if(parts.length===3){
+                let b = new Date(parts[2], parts[1]-1, parts[0]);
+                let t = new Date();
+                age = t.getFullYear()-b.getFullYear();
+                if(t.getMonth()<b.getMonth() || (t.getMonth()==b.getMonth() && t.getDate()<b.getDate())) age--;
+            }
+        }
+
+        startCake(); // Directly go to cake page
+    } else {
+        showPage(1); // show form if no params
+    }
+};
+
+// ----- Fireworks -----
+const canvas = document.getElementById("fireworksCanvas");
+const ctx = canvas.getContext("2d");
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
+let fireworks = [];
+
+function random(min,max){return Math.random()*(max-min)+min;}
+function Firework(){
+    this.x = random(100,canvas.width-100);
+    this.y = canvas.height;
+    this.targetY = random(100, canvas.height/2);
+    this.particles = [];
+    this.exploded = false;
+}
+Firework.prototype.update = function(){
+    if(!this.exploded){
+        this.y -= 5;
+        if(this.y <= this.targetY) this.explode();
+    }
+    this.particles.forEach(p=>{
+        p.x += p.vx;
+        p.y += p.vy;
+        p.vy += 0.05;
+        p.alpha -= 0.02;
+    });
+    this.particles = this.particles.filter(p=>p.alpha>0);
+}
+Firework.prototype.explode = function(){
+    this.exploded = true;
+    for(let i=0;i<50;i++){
+        let angle = Math.random()*Math.PI*2;
+        let speed = random(2,6);
+        this.particles.push({
+            x:this.x,
+            y:this.y,
+            vx:Math.cos(angle)*speed,
+            vy:Math.sin(angle)*speed,
+            color:`hsl(${Math.random()*360},100%,50%)`,
+            alpha:1
+        });
+    }
+}
+function animateFireworks(){
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    if(Math.random()<0.05) fireworks.push(new Firework());
+    fireworks.forEach(fw=>{
+        fw.update();
+        fw.particles.forEach(p=>{
+            ctx.fillStyle = p.color;
+            ctx.globalAlpha = p.alpha;
+            ctx.beginPath();
+            ctx.arc(p.x,p.y,2,0,Math.PI*2);
+            ctx.fill();
+        });
+    });
+    fireworks = fireworks.filter(fw=>fw.particles.length>0 || !fw.exploded);
+    ctx.globalAlpha = 1;
+    requestAnimationFrame(animateFireworks);
+}
+function startFireworks(){ animateFireworks(); }
 </script>
 </body>
 </html>
