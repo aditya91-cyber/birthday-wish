@@ -98,7 +98,7 @@ function init3D(){
     renderer.setSize(document.getElementById("scene").clientWidth,document.getElementById("scene").clientHeight);
     document.getElementById("scene").appendChild(renderer.domElement);
 
-    // Lights: stronger for bright cake
+    // Lights: brighter
     scene.add(new THREE.AmbientLight(0xffffff,0.7));
     let key=new THREE.PointLight(0xffddaa,2.0);
     key.position.set(6,12,8);
@@ -106,7 +106,7 @@ function init3D(){
 
     cakeGroup=new THREE.Group();
     cakeGroup.position.set(0,0,0);
-    cakeGroup.scale.set(0.15,0.15,0.15); // slightly bigger for visibility
+    cakeGroup.scale.set(0.15,0.15,0.15);
     scene.add(cakeGroup);
 
     let texLoader=new THREE.TextureLoader();
@@ -126,6 +126,7 @@ function init3D(){
         top.position.y=3.0;
         cakeGroup.add(top);
 
+        // Candles
         let count=Math.min(age,10);
         for(let i=0;i<count;i++){
             let candle=new THREE.Mesh(
@@ -148,8 +149,8 @@ function init3D(){
             cakeGroup.add(candle);
         }
 
-        // Text: Happy Birthday bottom layer
         new THREE.FontLoader().load("https://threejs.org/examples/fonts/helvetiker_regular.typeface.json", font=>{
+            // Bottom layer text
             let geo=new THREE.TextGeometry("Happy Birthday",{font:font,size:1.2,height:0.5});
             geo.center();
             let mat=new THREE.MeshStandardMaterial({color:0xffff00, emissive:0xffff00, emissiveIntensity:0.3});
@@ -157,13 +158,22 @@ function init3D(){
             text.position.set(0,1.7,0);
             cakeGroup.add(text);
 
-            // Text: user name top layer
+            // Top layer text: User name
             let geo2=new THREE.TextGeometry(userName.value,{font:font,size:1.0,height:0.4});
             geo2.center();
             let mat2=new THREE.MeshStandardMaterial({color:0xff4081, emissive:0xff4081, emissiveIntensity:0.3});
             let text2=new THREE.Mesh(geo2,mat2);
             text2.position.set(0,4.2,0);
             cakeGroup.add(text2);
+
+            // Age, Name, DOB above cake center
+            let infoStr = `Name: ${userName.value} | Age: ${age} | DOB: ${dob.value}`;
+            let geo3=new THREE.TextGeometry(infoStr,{font:font,size:0.6,height:0.2});
+            geo3.center();
+            let mat3=new THREE.MeshStandardMaterial({color:0x00ffff, emissive:0x00ffff, emissiveIntensity:0.3});
+            let infoText=new THREE.Mesh(geo3,mat3);
+            infoText.position.set(0,6,0);
+            cakeGroup.add(infoText);
         });
     }
 
