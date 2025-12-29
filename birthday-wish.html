@@ -62,13 +62,14 @@ button{
 </head>
 <body>
 
+<!-- Page 1: Input Form -->
 <div class="page active" id="page1">
     <h1>🎉 Birthday Cake 🎉</h1>
     <input id="userName" placeholder="Birthday Person Name">
     <input id="dob" placeholder="DOB (DD-MM-YYYY)">
     <input id="sender" placeholder="Gift Sender Name">
     <select id="gender">
-        <option value="">Select Birthday Boy/Girl</option>
+        <option value="">Select Gender</option>
         <option value="Boy">Boy</option>
         <option value="Girl">Girl</option>
     </select>
@@ -77,18 +78,25 @@ button{
     <button onclick="startCake()">Reveal Cake 🎂</button>
 </div>
 
+<!-- Page 2: 3D Cake -->
 <div class="page" id="page2">
     <h2>🎂 Happy Birthday 🎂</h2>
     <div id="scene"></div>
-    <!-- Overlay card for user info -->
     <div id="infoCard">
         <h2 id="infoTitle"></h2>
         <h2 id="infoName">Name: </h2>
         <p id="infoAge">Age: </p>
         <p id="infoDOB">DOB: </p>
         <p id="infoSender">From: </p>
-        <p id="infoMessage">Message: </p>
+        <!-- Message removed from Page 2 -->
     </div>
+    <button onclick="showMessagePage()">View Your Message 💌</button>
+</div>
+
+<!-- Page 3: Message -->
+<div class="page" id="page3">
+    <h2>Your Birthday Message 🎁</h2>
+    <p id="page3Message"></p>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
@@ -104,6 +112,7 @@ const sender=document.getElementById("sender");
 const gender=document.getElementById("gender");
 const wishingMessage=document.getElementById("wishingMessage");
 
+// Age calculation
 dob.addEventListener("input",()=>{
     let v=dob.value;
     let p=v.includes("-")?v.split("-"):v.includes("/")?v.split("/"):[]; 
@@ -113,31 +122,45 @@ dob.addEventListener("input",()=>{
     age=t.getFullYear()-b.getFullYear();
     if(t.getMonth()<b.getMonth() || (t.getMonth()==b.getMonth() && t.getDate()<b.getDate())) age--;
     if(age>0) ageShow.innerText="Age: "+age;
+    else ageShow.innerText="";
 });
 
+// Page switch
 function showPage(n){
     document.querySelectorAll(".page").forEach(p=>p.classList.remove("active"));
     document.getElementById("page"+n).classList.add("active");
 }
 
+// Start cake page
 function startCake(){
-    if(!userName.value||!sender.value||age<=0||!gender.value){
+    if(!userName.value||!sender.value||age<=0){
         alert("Enter valid details including Gender");
         return;
     }
+
+    // Gender optional
+    let selectedGender = gender.value || "Boy";
+
     showPage(2);
 
-    // Update overlay info card
-    document.getElementById("infoTitle").innerText = gender.value === "Girl" ? "Birthday Girl 🎀" : "Birthday Boy 🎉";
+    // Overlay info (without message)
+    document.getElementById("infoTitle").innerText = 
+        selectedGender === "Girl" ? "Birthday Girl 🎀" : "Birthday Boy 🎉";
     document.getElementById("infoName").innerText = "Name: " + userName.value;
     document.getElementById("infoAge").innerText = "Age: " + age;
     document.getElementById("infoDOB").innerText = "DOB: " + dob.value;
     document.getElementById("infoSender").innerText = "From: " + sender.value;
-    document.getElementById("infoMessage").innerText = "Message: " + wishingMessage.value;
 
     init3D();
 }
 
+// Show message page
+function showMessagePage(){
+    showPage(3);
+    document.getElementById("page3Message").innerText = wishingMessage.value;
+}
+
+// 3D Cake
 function init3D(){
     scene=new THREE.Scene();
     camera=new THREE.PerspectiveCamera(50, document.getElementById("scene").clientWidth/document.getElementById("scene").clientHeight, 0.1,1000);
@@ -159,9 +182,7 @@ function init3D(){
 
     let texLoader=new THREE.TextureLoader();
     texLoader.load("./cake.jpg",
-        tex=>{
-            addCake(new THREE.MeshStandardMaterial({map:tex, roughness:0.5, emissive:0xffffff, emissiveIntensity:0.3}));
-        },
+        tex=>{ addCake(new THREE.MeshStandardMaterial({map:tex, roughness:0.5, emissive:0xffffff, emissiveIntensity:0.3})); },
         undefined,
         ()=>{ addCake(new THREE.MeshStandardMaterial({color:0xffaaff, roughness:0.5, emissive:0xffffff, emissiveIntensity:0.3})); }
     );
@@ -174,7 +195,6 @@ function init3D(){
         top.position.y=3.0;
         cakeGroup.add(top);
 
-        // Candles
         let count=Math.min(age,10);
         for(let i=0;i<count;i++){
             let candle=new THREE.Mesh(
@@ -198,7 +218,6 @@ function init3D(){
         }
 
         new THREE.FontLoader().load("https://threejs.org/examples/fonts/helvetiker_regular.typeface.json", font=>{
-            // Bottom layer text
             let geo=new THREE.TextGeometry("Happy Birthday",{font:font,size:1.2,height:0.5});
             geo.center();
             let mat=new THREE.MeshStandardMaterial({color:0xffff00, emissive:0xffff00, emissiveIntensity:0.3});
@@ -206,7 +225,6 @@ function init3D(){
             text.position.set(0,1.7,0);
             cakeGroup.add(text);
 
-            // Top layer text: User name
             let geo2=new THREE.TextGeometry(userName.value,{font:font,size:1.0,height:0.4});
             geo2.center();
             let mat2=new THREE.MeshStandardMaterial({color:0xff4081, emissive:0xff4081, emissiveIntensity:0.3});
@@ -257,4 +275,3 @@ function animate(){
 </script>
 </body>
 </html>
-
