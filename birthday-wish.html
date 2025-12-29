@@ -32,6 +32,7 @@ button{
 #scene{
     width:100%;
     height:80vh;
+    touch-action:none; /* allow touch events */
     cursor:pointer;
 }
 </style>
@@ -107,9 +108,8 @@ function init3D(){
     cakeGroup.scale.set(0.12,0.12,0.12);
     scene.add(cakeGroup);
 
-    // Cake layers
     let texLoader=new THREE.TextureLoader();
-    texLoader.load("./cake.jpg",
+    texLoader.load("cake.jpg",
         tex=>{
             addCake(new THREE.MeshStandardMaterial({map:tex, roughness:0.6}));
         },
@@ -118,16 +118,13 @@ function init3D(){
     );
 
     function addCake(material){
-        // Bottom layer
         let bottom=new THREE.Mesh(new THREE.CylinderGeometry(5,5,3,64), material);
         cakeGroup.add(bottom);
 
-        // Top layer
         let top=new THREE.Mesh(new THREE.CylinderGeometry(3.5,3.5,2.5,64), material);
         top.position.y=3.0;
         cakeGroup.add(top);
 
-        // Candles
         let count=Math.min(age,10);
         for(let i=0;i<count;i++){
             let candle=new THREE.Mesh(
@@ -150,7 +147,6 @@ function init3D(){
             cakeGroup.add(candle);
         }
 
-        // Text
         new THREE.FontLoader().load("https://threejs.org/examples/fonts/helvetiker_regular.typeface.json", font=>{
             let geo=new THREE.TextGeometry("Happy Birthday",{font:font,size:0.8,height:0.3});
             geo.center();
@@ -168,11 +164,13 @@ function init3D(){
         });
     }
 
-    // Candle click
-    renderer.domElement.addEventListener("click",(event)=>{
-        let mouse=new THREE.Vector2();
-        mouse.x=(event.clientX/renderer.domElement.clientWidth)*2-1;
-        mouse.y=-(event.clientY/renderer.domElement.clientHeight)*2+1;
+    // Function to handle both click and touch
+    function handlePointer(event){
+        event.preventDefault();
+        let rect=renderer.domElement.getBoundingClientRect();
+        let x= ( (event.clientX || event.touches[0].clientX) - rect.left ) / rect.width *2 -1;
+        let y= - ( (event.clientY || event.touches[0].clientY) - rect.top ) / rect.height *2 +1;
+        let mouse=new THREE.Vector2(x,y);
 
         let raycaster=new THREE.Raycaster();
         raycaster.setFromCamera(mouse,camera);
@@ -181,7 +179,10 @@ function init3D(){
             if(obj.object.userData.flame) obj.object.userData.flame.visible=false;
             else if(obj.object.parent.userData.flame) obj.object.parent.userData.flame.visible=false;
         });
-    });
+    }
+
+    renderer.domElement.addEventListener("click", handlePointer, false);
+    renderer.domElement.addEventListener("touchstart", handlePointer, false);
 
     animate();
 }
@@ -195,7 +196,6 @@ function animate(){
         cakeGroup.scale.set(reveal,reveal,reveal);
     }
 
-    // Flame flicker
     flames.forEach(f=>{
         f.scale.y=0.8+Math.random()*0.4;
         f.material.emissiveIntensity=1.5+Math.random();
@@ -206,4 +206,3 @@ function animate(){
 </script>
 </body>
 </html>
-
