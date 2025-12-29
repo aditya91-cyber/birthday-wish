@@ -147,24 +147,26 @@ function init3D(){
             cakeGroup.add(candle);
         }
 
+        // Text properly positioned
         new THREE.FontLoader().load("https://threejs.org/examples/fonts/helvetiker_regular.typeface.json", font=>{
-            let geo=new THREE.TextGeometry("Happy Birthday",{font:font,size:0.8,height:0.3});
+            // Bottom layer: Happy Birthday
+            let geo=new THREE.TextGeometry("Happy Birthday",{font:font,size:1,height:0.4});
             geo.center();
             let mat=new THREE.MeshStandardMaterial({color:0xffff00});
             let text=new THREE.Mesh(geo,mat);
-            text.position.set(0,1.7,0);
+            text.position.set(0,1.6,0);
             cakeGroup.add(text);
 
-            let geo2=new THREE.TextGeometry(userName.value,{font:font,size:0.6,height:0.25});
+            // Top layer: user name
+            let geo2=new THREE.TextGeometry(userName.value,{font:font,size:0.8,height:0.3});
             geo2.center();
             let mat2=new THREE.MeshStandardMaterial({color:0xff4081});
             let text2=new THREE.Mesh(geo2,mat2);
-            text2.position.set(0,4.3,0);
+            text2.position.set(0,4.2,0);
             cakeGroup.add(text2);
         });
     }
 
-    // Function to handle both click and touch
     function handlePointer(event){
         event.preventDefault();
         let rect=renderer.domElement.getBoundingClientRect();
@@ -206,4 +208,3 @@ function animate(){
 </script>
 </body>
 </html>
-
