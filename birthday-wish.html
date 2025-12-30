@@ -66,6 +66,18 @@ button{
     word-break: break-word;
 }
 
+#cutButton{
+    display:none;
+    margin-top:15px;
+}
+
+#cutMessage{
+    display:none;
+    color:#ffeb3b;
+    font-size:1.5em;
+    margin-top:10px;
+}
+
 canvas#fireworksCanvas{
     position:absolute;
     top:0;
@@ -125,6 +137,8 @@ canvas#fireworksCanvas{
         <p id="infoAge">Age: </p>
         <p id="infoDOB">DOB: </p>
         <p id="infoSender">From: </p>
+        <button id="cutButton" onclick="cutCake()">Cut Cake 🎂</button>
+        <div id="cutMessage">Cake cut successfully 🎉</div>
     </div>
     <button onclick="showMessagePage()">View Your Message 💌</button>
 </div>
@@ -140,13 +154,15 @@ canvas#fireworksCanvas{
 <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/examples/js/geometries/TextGeometry.js"></script>
 
 <script>
-let age=0, scene, camera, renderer, flames=[], cakeGroup;
+let age=0, scene, camera, renderer, flames=[], cakeGroup, cakeSlices=[];
 const dob=document.getElementById("dob");
 const ageShow=document.getElementById("ageShow");
 const userName=document.getElementById("userName");
 const sender=document.getElementById("sender");
 const gender=document.getElementById("gender");
 const wishingMessage=document.getElementById("wishingMessage");
+const cutButton=document.getElementById("cutButton");
+const cutMessage=document.getElementById("cutMessage");
 
 // Age calculation
 dob.addEventListener("input",()=>{
@@ -240,13 +256,21 @@ function init3D(){
     );
 
     function addCake(material){
-        let bottom=new THREE.Mesh(new THREE.CylinderGeometry(5,5,3,64), material);
+        // Bottom cake as slices
+        let bottom=new THREE.Mesh(new THREE.CylinderGeometry(5,5,3,64,1,true), material);
+        bottom.geometry.groupsNeedUpdate = true;
+        bottom.userData.isSlice = true;
         cakeGroup.add(bottom);
+        cakeSlices.push(bottom);
 
-        let top=new THREE.Mesh(new THREE.CylinderGeometry(3.5,3.5,2.5,64), material);
+        // Top layer
+        let top=new THREE.Mesh(new THREE.CylinderGeometry(3.5,3.5,2.5,64,1,true), material);
         top.position.y=3.0;
+        top.userData.isSlice = true;
         cakeGroup.add(top);
+        cakeSlices.push(top);
 
+        // Candles
         let count=Math.min(age,10);
         for(let i=0;i<count;i++){
             let candle=new THREE.Mesh(
@@ -269,6 +293,7 @@ function init3D(){
             cakeGroup.add(candle);
         }
 
+        // Text
         new THREE.FontLoader().load("https://threejs.org/examples/fonts/helvetiker_regular.typeface.json", font=>{
             let geo=new THREE.TextGeometry("Happy Birthday",{font:font,size:1.2,height:0.5});
             geo.center();
@@ -296,10 +321,14 @@ function init3D(){
         let raycaster=new THREE.Raycaster();
         raycaster.setFromCamera(mouse,camera);
         let intersects=raycaster.intersectObjects(cakeGroup.children,true);
+        let allFlamesHidden = true;
         intersects.forEach(obj=>{
             if(obj.object.userData.flame) obj.object.userData.flame.visible=false;
-            else if(obj.object.parent.userData.flame) obj.object.parent.userData.flame.visible=false;
         });
+
+        // Check if all candles flames are hidden
+        flames.forEach(f=>{ if(f.visible) allFlamesHidden=false; });
+        if(allFlamesHidden) cutButton.style.display="block";
     }
 
     renderer.domElement.addEventListener("click", handlePointer, false);
@@ -331,6 +360,24 @@ function animate(){
     });
 
     renderer.render(scene,camera);
+}
+
+// ----- Cake cutting -----
+function cutCake(){
+    cutButton.disabled = true;
+    let step = 0;
+    let interval = setInterval(()=>{
+        step += 0.02;
+        cakeSlices.forEach((slice,i)=>{
+            slice.position.x = Math.sin(step+(i/2)) * 4;
+            slice.position.z = Math.cos(step+(i/2)) * 4;
+            slice.rotation.y += 0.05;
+        });
+        if(step>Math.PI/2){
+            clearInterval(interval);
+            cutMessage.style.display="block";
+        }
+    },30);
 }
 
 // ----- Automatic URL params handling -----
