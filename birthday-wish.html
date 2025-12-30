@@ -283,7 +283,7 @@ function init3D(){
             cakeGroup.add(candle);
         }
 
-        // Knife (realistic)
+        // Knife (fixed visibility)
         knife = new THREE.Mesh(
             new THREE.BoxGeometry(0.15,0.2,8),
             new THREE.MeshStandardMaterial({color:0xcccccc, emissive:0xff0000, emissiveIntensity:0.5})
@@ -295,10 +295,11 @@ function init3D(){
         handle.position.set(0,-0.25,-4.25);
         knife.add(handle);
 
-        knife.position.set(0,5,10);
+        knife.position.set(0,5,0); // cakeGroup ke andar
         knife.rotation.x=-Math.PI/4;
         knife.visible=false;
-        scene.add(knife);
+
+        cakeGroup.add(knife); // cakeGroup ke sath add
 
         // Text
         new THREE.FontLoader().load("https://threejs.org/examples/fonts/helvetiker_regular.typeface.json", font=>{
@@ -371,7 +372,7 @@ function cutCake(){
     let step = 0;
     let interval = setInterval(()=>{
         step += 0.03;
-        knife.position.z = 10 - step*12; 
+        knife.position.z = 0 - step*12; 
         knife.rotation.x = -Math.PI/4 + Math.sin(step*3)*0.2;
 
         cakeSlices.forEach((slice,i)=>{
