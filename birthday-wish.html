@@ -117,7 +117,6 @@ canvas#fireworksCanvas{
     to{text-shadow:2px 2px 5px #000, 0 0 20px #ff0;}
 }
 
-/* Confetti */
 .confetti{
     position:absolute;
     width:10px;
@@ -131,21 +130,6 @@ canvas#fireworksCanvas{
 @keyframes fall{
     0%{transform:translateY(0) rotate(0deg);}
     100%{transform:translateY(600px) rotate(360deg);}
-}
-
-/* Balloons */
-.balloon{
-    position:absolute;
-    width:30px;
-    height:40px;
-    background-color:red;
-    border-radius:50% 50% 50% 50%;
-    opacity:0.8;
-    animation:rise linear infinite;
-}
-@keyframes rise{
-    0%{transform:translateY(600px) scale(0.5);}
-    100%{transform:translateY(-100px) scale(1);}
 }
 
 @media (max-width:600px){
@@ -211,6 +195,7 @@ canvas#fireworksCanvas{
 <div class="page" id="page3">
     <h2>Your Birthday Message 🎁</h2>
     <p id="page3Message" style="font-size:1.2em; margin-bottom:20px;"></p>
+    <!-- Poster -->
     <div class="poster" id="poster">
         <h2 id="posterName"></h2>
         <p id="posterAge"></p>
@@ -229,7 +214,7 @@ canvas#fireworksCanvas{
 <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/examples/js/geometries/TextGeometry.js"></script>
 
 <script>
-// Base variables
+// Base code variables
 let age=0, scene, camera, renderer, flames=[], cakeGroup, cakeSlices=[], knife;
 const dob=document.getElementById("dob");
 const ageShow=document.getElementById("ageShow");
@@ -289,25 +274,29 @@ function startCake(){
     playMusic();
 }
 
-// Show message page + poster
+// Show message page
 function showMessagePage(){
     showPage(3);
     document.getElementById("page3Message").innerText = wishingMessage.value || "Happy Birthday! 🎉";
+    
+    // Poster details
     document.getElementById("posterName").innerText = userName.value;
     document.getElementById("posterAge").innerText = "Age: " + age;
     document.getElementById("posterDOB").innerText = "DOB: " + dob.value;
     
+    // Random vibes
     let vibes = vibesList[Math.floor(Math.random()*vibesList.length)];
     document.getElementById("posterWish1").innerText = vibes[0];
     document.getElementById("posterWish2").innerText = vibes[1];
     document.getElementById("posterWish3").innerText = vibes[2];
     
+    // Random shayari
     let shayari = shayariList[Math.floor(Math.random()*shayariList.length)];
     document.getElementById("posterShayari").innerText = shayari;
+    
     document.getElementById("posterSender").innerText = "From: " + sender.value;
     
     startConfetti();
-    startBalloons();
 }
 
 // Confetti
@@ -320,19 +309,6 @@ function startConfetti(){
         c.style.left = Math.random()*100+"%";
         c.style.animationDuration = (2+Math.random()*3)+"s";
         poster.appendChild(c);
-    }
-}
-
-// Balloons animation
-function startBalloons(){
-    const poster = document.getElementById("poster");
-    for(let i=0;i<10;i++){
-        let b = document.createElement("div");
-        b.className="balloon";
-        b.style.backgroundColor=`hsl(${Math.random()*360},80%,60%)`;
-        b.style.left=Math.random()*90+"%";
-        b.style.animationDuration=(3+Math.random()*3)+"s";
-        poster.appendChild(b);
     }
 }
 
