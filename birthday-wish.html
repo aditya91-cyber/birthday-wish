@@ -107,7 +107,6 @@ canvas#fireworksCanvas{
 </head>
 <body>
 
-<!-- Background Music -->
 <audio id="bgMusic" loop>
   <source src="birthday_song.mp3" type="audio/mpeg">
 </audio>
@@ -154,7 +153,7 @@ canvas#fireworksCanvas{
 <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/examples/js/geometries/TextGeometry.js"></script>
 
 <script>
-let age=0, scene, camera, renderer, flames=[], cakeGroup, cakeSlices=[];
+let age=0, scene, camera, renderer, flames=[], cakeGroup, cakeSlices=[], knife;
 const dob=document.getElementById("dob");
 const ageShow=document.getElementById("ageShow");
 const userName=document.getElementById("userName");
@@ -177,13 +176,11 @@ dob.addEventListener("input",()=>{
     else ageShow.innerText="";
 });
 
-// Page switch
 function showPage(n){
     document.querySelectorAll(".page").forEach(p=>p.classList.remove("active"));
     document.getElementById("page"+n).classList.add("active");
 }
 
-// Start cake page
 function startCake(){
     if(!userName.value||!sender.value||age<0){
         alert("Enter valid details including Gender");
@@ -194,7 +191,6 @@ function startCake(){
 
     showPage(2);
 
-    // Overlay info
     document.getElementById("infoTitle").innerText = 
         selectedGender === "Girl" ? "Birthday Girl 🎀" : "Birthday Boy 🎉";
     document.getElementById("infoName").innerText = "Name: " + userName.value;
@@ -207,20 +203,17 @@ function startCake(){
     playMusic();
 }
 
-// Show message page
 function showMessagePage(){
     showPage(3);
     document.getElementById("page3Message").innerText = wishingMessage.value || "Happy Birthday! 🎉";
 }
 
-// Share link
 function shareLink(){
     let url = `${window.location.origin}${window.location.pathname}?name=${encodeURIComponent(userName.value)}&sender=${encodeURIComponent(sender.value)}&dob=${encodeURIComponent(dob.value)}&gender=${encodeURIComponent(gender.value)}&message=${encodeURIComponent(wishingMessage.value)}`;
     navigator.clipboard.writeText(url);
     alert("Link copied! Share it with your friend.");
 }
 
-// Background music
 function playMusic() {
     const music = document.getElementById("bgMusic");
     music.play().catch(e => {
@@ -228,7 +221,7 @@ function playMusic() {
     });
 }
 
-// 3D Cake
+// 3D Cake + Knife
 function init3D(){
     scene=new THREE.Scene();
     camera=new THREE.PerspectiveCamera(50, document.getElementById("scene").clientWidth/document.getElementById("scene").clientHeight, 0.1,1000);
@@ -256,14 +249,11 @@ function init3D(){
     );
 
     function addCake(material){
-        // Bottom cake as slices
         let bottom=new THREE.Mesh(new THREE.CylinderGeometry(5,5,3,64,1,true), material);
-        bottom.geometry.groupsNeedUpdate = true;
         bottom.userData.isSlice = true;
         cakeGroup.add(bottom);
         cakeSlices.push(bottom);
 
-        // Top layer
         let top=new THREE.Mesh(new THREE.CylinderGeometry(3.5,3.5,2.5,64,1,true), material);
         top.position.y=3.0;
         top.userData.isSlice = true;
@@ -292,6 +282,23 @@ function init3D(){
             flames.push(flame);
             cakeGroup.add(candle);
         }
+
+        // Knife (realistic)
+        knife = new THREE.Mesh(
+            new THREE.BoxGeometry(0.15,0.2,8),
+            new THREE.MeshStandardMaterial({color:0xcccccc, emissive:0xff0000, emissiveIntensity:0.5})
+        );
+        let handle = new THREE.Mesh(
+            new THREE.BoxGeometry(0.3,0.3,1.5),
+            new THREE.MeshStandardMaterial({color:0x333333})
+        );
+        handle.position.set(0,-0.25,-4.25);
+        knife.add(handle);
+
+        knife.position.set(0,5,10);
+        knife.rotation.x=-Math.PI/4;
+        knife.visible=false;
+        scene.add(knife);
 
         // Text
         new THREE.FontLoader().load("https://threejs.org/examples/fonts/helvetiker_regular.typeface.json", font=>{
@@ -325,8 +332,6 @@ function init3D(){
         intersects.forEach(obj=>{
             if(obj.object.userData.flame) obj.object.userData.flame.visible=false;
         });
-
-        // Check if all candles flames are hidden
         flames.forEach(f=>{ if(f.visible) allFlamesHidden=false; });
         if(allFlamesHidden) cutButton.style.display="block";
     }
@@ -348,135 +353,64 @@ function init3D(){
 let reveal=0.05;
 function animate(){
     requestAnimationFrame(animate);
-
     if(reveal<1){
         reveal+=0.02;
         cakeGroup.scale.set(reveal,reveal,reveal);
     }
-
     flames.forEach(f=>{
         f.scale.y=0.8+Math.random()*0.4;
         f.material.emissiveIntensity=1.5+Math.random();
     });
-
     renderer.render(scene,camera);
 }
 
-// ----- Cake cutting -----
+// Cake cutting with knife swing animation
 function cutCake(){
     cutButton.disabled = true;
+    knife.visible=true;
     let step = 0;
     let interval = setInterval(()=>{
-        step += 0.02;
+        step += 0.03;
+        knife.position.z = 10 - step*12; 
+        knife.rotation.x = -Math.PI/4 + Math.sin(step*3)*0.2;
+
         cakeSlices.forEach((slice,i)=>{
             slice.position.x = Math.sin(step+(i/2)) * 4;
             slice.position.z = Math.cos(step+(i/2)) * 4;
             slice.rotation.y += 0.05;
         });
-        if(step>Math.PI/2){
+
+        if(step>1){
             clearInterval(interval);
             cutMessage.style.display="block";
+            knife.visible=false;
         }
     },30);
 }
 
-// ----- Automatic URL params handling -----
-function getQueryParams() {
-    let params = {};
-    window.location.search.substring(1).split("&").forEach(p=>{
-        let [key,value] = p.split("=");
-        if(key) params[key] = decodeURIComponent((value||"").replace(/\+/g," "));
-    });
-    return params;
-}
-
-window.onload = () => {
-    let params = getQueryParams();
-    if(params.name && params.sender){
-        userName.value = params.name;
-        sender.value = params.sender;
-        dob.value = params.dob || "";
-        gender.value = params.gender || "Boy";
-        wishingMessage.value = params.message || "Happy Birthday! 🎉";
-
-        // Calculate age
-        if(dob.value){
-            let parts = dob.value.includes("-")? dob.value.split("-") : dob.value.split("/");
-            if(parts.length===3){
-                let b = new Date(parts[2], parts[1]-1, parts[0]);
-                let t = new Date();
-                age = t.getFullYear()-b.getFullYear();
-                if(t.getMonth()<b.getMonth() || (t.getMonth()==b.getMonth() && t.getDate()<b.getDate())) age--;
-            }
-        }
-
-        startCake(); // Directly go to cake page
-    } else {
-        showPage(1); // show form if no params
-    }
-};
-
-// ----- Fireworks -----
+// Fireworks
 const canvas = document.getElementById("fireworksCanvas");
 const ctx = canvas.getContext("2d");
 canvas.width = window.innerWidth;
 canvas.height = window.innerHeight;
 let fireworks = [];
-
 function random(min,max){return Math.random()*(max-min)+min;}
-function Firework(){
-    this.x = random(100,canvas.width-100);
-    this.y = canvas.height;
-    this.targetY = random(100, canvas.height/2);
-    this.particles = [];
-    this.exploded = false;
-}
-Firework.prototype.update = function(){
-    if(!this.exploded){
-        this.y -= 5;
-        if(this.y <= this.targetY) this.explode();
-    }
-    this.particles.forEach(p=>{
-        p.x += p.vx;
-        p.y += p.vy;
-        p.vy += 0.05;
-        p.alpha -= 0.02;
-    });
-    this.particles = this.particles.filter(p=>p.alpha>0);
-}
-Firework.prototype.explode = function(){
-    this.exploded = true;
-    for(let i=0;i<50;i++){
-        let angle = Math.random()*Math.PI*2;
-        let speed = random(2,6);
-        this.particles.push({
-            x:this.x,
-            y:this.y,
-            vx:Math.cos(angle)*speed,
-            vy:Math.sin(angle)*speed,
-            color:`hsl(${Math.random()*360},100%,50%)`,
-            alpha:1
-        });
-    }
-}
-function animateFireworks(){
-    ctx.clearRect(0,0,canvas.width,canvas.height);
-    if(Math.random()<0.05) fireworks.push(new Firework());
-    fireworks.forEach(fw=>{
-        fw.update();
-        fw.particles.forEach(p=>{
-            ctx.fillStyle = p.color;
-            ctx.globalAlpha = p.alpha;
-            ctx.beginPath();
-            ctx.arc(p.x,p.y,2,0,Math.PI*2);
-            ctx.fill();
-        });
-    });
-    fireworks = fireworks.filter(fw=>fw.particles.length>0 || !fw.exploded);
-    ctx.globalAlpha = 1;
-    requestAnimationFrame(animateFireworks);
-}
-function startFireworks(){ animateFireworks(); }
+function Firework(){ this.x=random(100,canvas.width-100); this.y=canvas.height; this.targetY=random(100,canvas.height/2); this.particles=[]; this.exploded=false;}
+Firework.prototype.update=function(){if(!this.exploded){this.y-=5;if(this.y<=this.targetY)this.explode();}this.particles.forEach(p=>{p.x+=p.vx;p.y+=p.vy;p.vy+=0.05;p.alpha-=0.02;});this.particles=this.particles.filter(p=>p.alpha>0);}
+Firework.prototype.explode=function(){this.exploded=true;for(let i=0;i<50;i++){let angle=Math.random()*Math.PI*2;let speed=random(2,6);this.particles.push({x:this.x,y:this.y,vx:Math.cos(angle)*speed,vy:Math.sin(angle)*speed,color:`hsl(${Math.random()*360},100%,50%)`,alpha:1});}}
+function animateFireworks(){ctx.clearRect(0,0,canvas.width,canvas.height);if(Math.random()<0.05)fireworks.push(new Firework());fireworks.forEach(fw=>{fw.update();fw.particles.forEach(p=>{ctx.fillStyle=p.color;ctx.globalAlpha=p.alpha;ctx.beginPath();ctx.arc(p.x,p.y,2,0,Math.PI*2);ctx.fill();});});fireworks=fireworks.filter(fw=>fw.particles.length>0||!fw.exploded);ctx.globalAlpha=1;requestAnimationFrame(animateFireworks);}
+function startFireworks(){animateFireworks();}
+
+// URL params
+function getQueryParams() {let params={};window.location.search.substring(1).split("&").forEach(p=>{let [key,value]=p.split("=");if(key)params[key]=decodeURIComponent((value||"").replace(/\+/g," "));});return params;}
+window.onload=()=>{
+    let params=getQueryParams();
+    if(params.name&&params.sender){
+        userName.value=params.name; sender.value=params.sender; dob.value=params.dob||""; gender.value=params.gender||"Boy"; wishingMessage.value=params.message||"Happy Birthday! 🎉";
+        if(dob.value){ let parts = dob.value.includes("-")? dob.value.split("-") : dob.value.split("/"); if(parts.length===3){ let b = new Date(parts[2], parts[1]-1, parts[0]); let t = new Date(); age=t.getFullYear()-b.getFullYear(); if(t.getMonth()<b.getMonth()||(t.getMonth()==b.getMonth()&&t.getDate()<b.getDate()))age--; } }
+        startCake();
+    }else{ showPage(1);}
+};
 </script>
 </body>
 </html>
