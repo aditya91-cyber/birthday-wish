@@ -199,7 +199,7 @@ function showMessagePage(){
 
 // Share link
 function shareLink(){
-    let url = ${window.location.origin}${window.location.pathname}?name=${encodeURIComponent(userName.value)}&sender=${encodeURIComponent(sender.value)}&dob=${encodeURIComponent(dob.value)}&gender=${encodeURIComponent(gender.value)}&message=${encodeURIComponent(wishingMessage.value)};
+    let url = `${window.location.origin}${window.location.pathname}?name=${encodeURIComponent(userName.value)}&sender=${encodeURIComponent(sender.value)}&dob=${encodeURIComponent(dob.value)}&gender=${encodeURIComponent(gender.value)}&message=${encodeURIComponent(wishingMessage.value)}`;
     navigator.clipboard.writeText(url);
     alert("Link copied! Share it with your friend.");
 }
@@ -407,7 +407,7 @@ Firework.prototype.explode = function(){
             y:this.y,
             vx:Math.cos(angle)*speed,
             vy:Math.sin(angle)*speed,
-            color:hsl(${Math.random()*360},100%,50%),
+            color:`hsl(${Math.random()*360},100%,50%)`,
             alpha:1
         });
     }
