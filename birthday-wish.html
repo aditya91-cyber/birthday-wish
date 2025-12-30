@@ -249,16 +249,28 @@ function init3D(){
     );
 
     function addCake(material){
-        let bottom=new THREE.Mesh(new THREE.CylinderGeometry(5,5,3,64,1,true), material);
-        bottom.userData.isSlice = true;
-        cakeGroup.add(bottom);
-        cakeSlices.push(bottom);
-
-        let top=new THREE.Mesh(new THREE.CylinderGeometry(3.5,3.5,2.5,64,1,true), material);
-        top.position.y=3.0;
-        top.userData.isSlice = true;
-        cakeGroup.add(top);
-        cakeSlices.push(top);
+        let sliceCount = 6;
+        for(let s=0;s<sliceCount;s++){
+            let slice = new THREE.Mesh(
+                new THREE.CylinderGeometry(5,5,3,64,1,false, s/sliceCount*Math.PI*2, Math.PI*2/sliceCount),
+                material
+            );
+            slice.position.y=0;
+            slice.userData.isSlice=true;
+            cakeGroup.add(slice);
+            cakeSlices.push(slice);
+        }
+        let topSliceCount = 6;
+        for(let s=0;s<topSliceCount;s++){
+            let slice = new THREE.Mesh(
+                new THREE.CylinderGeometry(3.5,3.5,2.5,64,1,false, s/topSliceCount*Math.PI*2, Math.PI*2/topSliceCount),
+                material
+            );
+            slice.position.y=3;
+            slice.userData.isSlice=true;
+            cakeGroup.add(slice);
+            cakeSlices.push(slice);
+        }
 
         // Candles
         let count=Math.min(age,10);
@@ -283,10 +295,10 @@ function init3D(){
             cakeGroup.add(candle);
         }
 
-        // Knife (fixed visibility)
+        // Knife
         knife = new THREE.Mesh(
             new THREE.BoxGeometry(0.15,0.2,8),
-            new THREE.MeshStandardMaterial({color:0xcccccc, emissive:0xff0000, emissiveIntensity:0.5})
+            new THREE.MeshStandardMaterial({color:0xffffff, emissive:0xffff00, emissiveIntensity:1})
         );
         let handle = new THREE.Mesh(
             new THREE.BoxGeometry(0.3,0.3,1.5),
@@ -295,11 +307,11 @@ function init3D(){
         handle.position.set(0,-0.25,-4.25);
         knife.add(handle);
 
-        knife.position.set(0,5,0); // cakeGroup ke andar
+        knife.position.set(0,5,0); 
         knife.rotation.x=-Math.PI/4;
         knife.visible=false;
 
-        cakeGroup.add(knife); // cakeGroup ke sath add
+        cakeGroup.add(knife);
 
         // Text
         new THREE.FontLoader().load("https://threejs.org/examples/fonts/helvetiker_regular.typeface.json", font=>{
@@ -331,7 +343,10 @@ function init3D(){
         let intersects=raycaster.intersectObjects(cakeGroup.children,true);
         let allFlamesHidden = true;
         intersects.forEach(obj=>{
-            if(obj.object.userData.flame) obj.object.userData.flame.visible=false;
+            if(obj.object.userData.flame){
+                obj.object.userData.flame.visible=false;
+                obj.object.material.color.set(0x555555); // dim candle
+            }
         });
         flames.forEach(f=>{ if(f.visible) allFlamesHidden=false; });
         if(allFlamesHidden) cutButton.style.display="block";
@@ -365,7 +380,7 @@ function animate(){
     renderer.render(scene,camera);
 }
 
-// Cake cutting with knife swing animation
+// Cake cutting animation
 function cutCake(){
     cutButton.disabled = true;
     knife.visible=true;
@@ -408,9 +423,9 @@ window.onload=()=>{
     let params=getQueryParams();
     if(params.name&&params.sender){
         userName.value=params.name; sender.value=params.sender; dob.value=params.dob||""; gender.value=params.gender||"Boy"; wishingMessage.value=params.message||"Happy Birthday! 🎉";
-        if(dob.value){ let parts = dob.value.includes("-")? dob.value.split("-") : dob.value.split("/"); if(parts.length===3){ let b = new Date(parts[2], parts[1]-1, parts[0]); let t = new Date(); age=t.getFullYear()-b.getFullYear(); if(t.getMonth()<b.getMonth()||(t.getMonth()==b.getMonth()&&t.getDate()<b.getDate()))age--; } }
+        if(dob.value){let parts=dob.value.includes("-")?dob.value.split("-"):dob.value.split("/"); if(parts.length===3){let b=new Date(parts[2],parts[1]-1,parts[0]); let t=new Date(); age=t.getFullYear()-b.getFullYear(); if(t.getMonth()<b.getMonth()||(t.getMonth()==b.getMonth()&&t.getDate()<b.getDate())) age--;}}
         startCake();
-    }else{ showPage(1);}
+    } else showPage(1);
 };
 </script>
 </body>
