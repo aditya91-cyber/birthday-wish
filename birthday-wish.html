@@ -163,7 +163,6 @@ const wishingMessage=document.getElementById("wishingMessage");
 const cutButton=document.getElementById("cutButton");
 const cutMessage=document.getElementById("cutMessage");
 
-// Age calculation
 dob.addEventListener("input",()=>{
     let v=dob.value;
     let p=v.includes("-")?v.split("-"):v.includes("/")?v.split("/"):[]; 
@@ -249,6 +248,7 @@ function init3D(){
     );
 
     function addCake(material){
+        // Slices
         let sliceCount = 6;
         for(let s=0;s<sliceCount;s++){
             let slice = new THREE.Mesh(
@@ -345,7 +345,7 @@ function init3D(){
         intersects.forEach(obj=>{
             if(obj.object.userData.flame){
                 obj.object.userData.flame.visible=false;
-                obj.object.material.color.set(0x555555); // dim candle
+                cakeGroup.remove(obj.object); // remove candle completely
             }
         });
         flames.forEach(f=>{ if(f.visible) allFlamesHidden=false; });
@@ -387,13 +387,14 @@ function cutCake(){
     let step = 0;
     let interval = setInterval(()=>{
         step += 0.03;
-        knife.position.z = 0 - step*12; 
+        knife.position.z = -step*12; 
         knife.rotation.x = -Math.PI/4 + Math.sin(step*3)*0.2;
 
         cakeSlices.forEach((slice,i)=>{
-            slice.position.x = Math.sin(step+(i/2)) * 4;
-            slice.position.z = Math.cos(step+(i/2)) * 4;
+            slice.position.x = Math.sin(step+(i/2)) * 6; 
+            slice.position.z = Math.cos(step+(i/2)) * 6;
             slice.rotation.y += 0.05;
+            slice.material.emissiveIntensity = 0.2; // bright slice
         });
 
         if(step>1){
