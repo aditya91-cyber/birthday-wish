@@ -140,6 +140,7 @@ canvas#fireworksCanvas, canvas#confettiCanvas{
   <source src="birthday_song.mp3" type="audio/mpeg">
 </audio>
 
+<!-- PAGE 1 -->
 <div class="page" id="page1">
     <h1>🎉 Birthday Cake 🎉</h1>
     <input id="userName" placeholder="Birthday Person Name">
@@ -155,6 +156,7 @@ canvas#fireworksCanvas, canvas#confettiCanvas{
     <button onclick="startCake()">Reveal Cake 🎂</button>
 </div>
 
+<!-- PAGE 2 -->
 <div class="page" id="page2">
     <h2>🎂 Happy Birthday 🎂</h2>
     <canvas id="fireworksCanvas"></canvas>
@@ -171,6 +173,7 @@ canvas#fireworksCanvas, canvas#confettiCanvas{
     <button onclick="showMessagePage()">View Your Message 💌</button>
 </div>
 
+<!-- PAGE 3 -->
 <div class="page" id="page3">
     <canvas id="confettiCanvas"></canvas>
     <h2>Your Birthday Message 🎁</h2>
@@ -235,25 +238,60 @@ function startCake(){
     document.getElementById("infoAge").innerText = "Age: " + age;
     document.getElementById("infoDOB").innerText = "DOB: " + dob.value;
     document.getElementById("infoSender").innerText = "From: " + sender.value;
-    init3D();
-    startFireworks();
+    init3D(); // 3D Cake init (unchanged)
+    startFireworks(); // Fireworks (unchanged)
     playMusic();
 }
 
-// ===== Show Message Page =====
+// ===== Page 3 =====
+const confettiCanvas = document.getElementById("confettiCanvas");
+const confCtx = confettiCanvas.getContext("2d");
+confettiCanvas.width = window.innerWidth;
+confettiCanvas.height = window.innerHeight;
+let confettiParticles = [];
+function random(min,max){return Math.random()*(max-min)+min;}
+function Confetti(){ 
+    this.x=random(0,window.innerWidth); 
+    this.y=random(-50,0); 
+    this.size=random(5,12); 
+    this.speed=random(1,5); 
+    this.color=`hsl(${random(0,360)},100%,50%)`; 
+    this.tilt=random(-10,10); 
+}
+Confetti.prototype.update=function(){
+    this.y+=this.speed;
+    this.x+=Math.sin(this.y*0.05)*2;
+    this.tilt+=Math.random()*0.5-0.25;
+    if(this.y>window.innerHeight) this.y=random(-50,0);
+}
+function animateConfetti(){
+    confCtx.clearRect(0,0,window.innerWidth,window.innerHeight);
+    confettiParticles.forEach(c=>{
+        c.update();
+        confCtx.fillStyle=c.color;
+        confCtx.beginPath();
+        confCtx.moveTo(c.x,c.y);
+        confCtx.lineTo(c.x + c.tilt, c.y + c.size);
+        confCtx.lineTo(c.x, c.y + c.size);
+        confCtx.fill();
+    });
+    requestAnimationFrame(animateConfetti);
+}
+function startConfetti(){
+    confettiParticles=[];
+    for(let i=0;i<150;i++) confettiParticles.push(new Confetti());
+    animateConfetti();
+}
+
 function showMessagePage(){
     showPage(3);
 
-    // ===== Display User Message =====
     document.getElementById("page3Message").innerText = wishingMessage.value || "Happy Birthday! 🎉";
-
-    // ===== Poster Info =====
     document.getElementById("posterName").innerText = userName.value;
     document.getElementById("posterAge").innerText = "Age: " + age;
     document.getElementById("posterDOB").innerText = "DOB: " + dob.value;
 
-    // ===== Random 3 vibes =====
-    const vibes = [
+    const vibes=[
         "🎈 Wishing you joy and happiness!",
         "🎉 May your day be filled with fun and love!",
         "✨ Shine bright and achieve all your dreams!",
@@ -266,9 +304,7 @@ function showMessagePage(){
     document.getElementById("posterWish2").innerText = shuffled[1];
     document.getElementById("posterWish3").innerText = shuffled[2];
 
-    // ===== Sender =====
     document.getElementById("posterSender").innerText = "From: " + sender.value;
-
     startConfetti();
 }
 
@@ -287,43 +323,11 @@ function playMusic() {
     });
 }
 
-// ===== Confetti for Poster =====
-const confettiCanvas = document.getElementById("confettiCanvas");
-const confCtx = confettiCanvas.getContext("2d");
-confettiCanvas.width = window.innerWidth;
-confettiCanvas.height = window.innerHeight;
-let confettiParticles = [];
-function random(min,max){return Math.random()*(max-min)+min;}
-function Confetti(){ this.x=random(0,window.innerWidth); this.y=random(-50,0); this.size=random(5,12); this.speed=random(1,5); this.color=`hsl(${random(0,360)},100%,50%)`; this.tilt=random(-10,10);}
-Confetti.prototype.update=function(){ this.y+=this.speed; this.x+=Math.sin(this.y*0.05)*2; this.tilt+=Math.random()*0.5-0.25; if(this.y>window.innerHeight)this.y=random(-50,0); }
-function animateConfetti(){
-    confCtx.clearRect(0,0,window.innerWidth,window.innerHeight);
-    confettiParticles.forEach(c=>{
-        c.update();
-        confCtx.fillStyle=c.color;
-        confCtx.beginPath();
-        confCtx.moveTo(c.x, c.y);
-        confCtx.lineTo(c.x + c.tilt, c.y + c.size);
-        confCtx.lineTo(c.x, c.y + c.size);
-        confCtx.fill();
-    });
-    requestAnimationFrame(animateConfetti);
-}
-function startConfetti(){
-    confettiParticles = [];
-    for(let i=0;i<150;i++) confettiParticles.push(new Confetti());
-    animateConfetti();
-}
-
-// ===== Window Resize =====
+// ===== Responsive =====
 window.addEventListener('resize',()=>{
     confettiCanvas.width=window.innerWidth;
     confettiCanvas.height=window.innerHeight;
 });
-
-// ===== Fireworks + 3D Cake code =====
-// [The full 3D cake + fireworks + knife + cutting animation remains exactly as in your base code]
-// You can integrate it directly from your previous script (init3D, animate, cutCake, Firework etc.)
 
 // ===== URL Params Auto-load =====
 function getQueryParams() {
